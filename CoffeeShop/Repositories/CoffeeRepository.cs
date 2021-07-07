@@ -27,16 +27,25 @@ namespace CoffeeShop.Repositories
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Id, [Title], BeanVarietyId FROM Coffee;";
+                    cmd.CommandText = @"SELECT c.Id, c.[Title], c.BeanVarietyId, b.Name, b.Region, b.Notes
+                                        FROM Coffee c
+                                            LEFT Join BeanVariety b at @c.BeanVarietyId = b.Id;";
                     var reader = cmd.ExecuteReader();
                     var coffees = new List<Coffee>();
                     while (reader.Read())
-                    {
-                        var coffee = new Coffee()
+                    {                         
+                        Coffee coffee = new Coffee()
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             BeanVarietyId = reader.GetInt32(reader.GetOrdinal("BeanVarietyId")),
+                            BeanVariety = new BeanVariety()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Region = reader.GetString(reader.GetOrdinal("Region")),
+                                Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes"))
+                            }
                         };
                         coffees.Add(coffee);
                     }
@@ -56,8 +65,9 @@ namespace CoffeeShop.Repositories
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        SELECT Id, [Title], BeanVarietyId
-                          FROM Coffee
+                        SELECT c.Id, c.[Title], c.BeanVarietyId, b.Name, b.Region, b.Notes
+                          FROM Coffee c
+                             LEFT JOIN BeanVariety b on c.BeanVarietyId = b.id 
                          WHERE Id = @id;";
                     cmd.Parameters.AddWithValue("@id", id);
 
@@ -71,6 +81,14 @@ namespace CoffeeShop.Repositories
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             BeanVarietyId = reader.GetInt32(reader.GetOrdinal("BeanVarietyId")),
+                            BeanVariety = new BeanVariety()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Region = reader.GetString(reader.GetOrdinal("Region")),
+                                Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes"))
+
+                            }
                         };
                     }
 
@@ -107,6 +125,27 @@ namespace CoffeeShop.Repositories
                 }
             }
         }
+
+        //public void AddBeanVarietyToCoffee(int coffee, int beanVariety)
+        //{
+        //    using (SqlConnection conn = Connection)
+        //    {
+        //        conn.Open();
+
+        //        using (SqlCommand cmd = conn.CreateCommand())
+        //        {
+        //            cmd.CommandText = @"
+        //            SELECT * 
+        //            from Coffee 
+        //            JOIN BeanVariety at @Coffee.BeanVarietyId = BeanVariety.Id
+        //            INSERT into PostTag(PostId, TagId)
+        //            values(1,1)";
+
+        //            cmd.Parameters.AddWithValue("@PostId", PostId);
+        //            cmd.Parameters.AddWithValue("@TagId", TagId);
+        //        }
+        //    }
+        //}
 
         public void Update(Coffee coffee)
         {
